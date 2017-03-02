@@ -898,6 +898,16 @@ our $PERL_DEPS = {
         required => '1',
         min_ver  => '0.37',
     },
+    'POE' => {
+        'usage' => 'OAI-PMH harvester',
+        'required' => 1,
+        'min_ver' => '1.354',
+    },
+    'POE::Component::JobQueue' => {
+        'usage' => 'OAI-PMH harvester',
+        'required' => 1,
+        'min_ver' => '0.570',
+    },
 };
 
 1;

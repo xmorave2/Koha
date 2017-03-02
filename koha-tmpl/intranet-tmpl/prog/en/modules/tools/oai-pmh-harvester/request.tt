@@ -1,0 +1,241 @@
+[% INCLUDE 'doc-head-open.inc' %]
+<title>Koha &rsaquo; Tools &rsaquo; OAI-PMH harvester &rsaquo; Request</title>
+[% INCLUDE 'doc-head-close.inc' %]
+[% INCLUDE 'calendar.inc' %]
+<script type="text/javascript" src="[% interface %]/lib/jquery/plugins/jquery-ui-timepicker-addon.min.js"></script>
+[% INCLUDE 'timepicker.inc' %]
+<script type="text/javascript">
+//<![CDATA[
+    $(document).ready(function() {
+        toggle_identifier();
+        $("#oai_verb").on("click",toggle_identifier);
+        $(".datetime_utc").datetimepicker({
+            separator: "T",
+            timeSuffix: 'Z',
+            dateFormat: "yy-mm-dd",
+            timeFormat: "HH:mm:ss",
+            hour: 0,
+            minute: 0,
+            second: 0,
+            showSecond: 1,
+            // timezone doesn't work with the "Now" button in v1.4.3 although it appears to in v1.6.1
+            // timezone: '+000'
+        });
+    });
+    function toggle_identifier (){
+        var verb = $("#oai_verb").find(":selected").val();
+        var oai_identifier = $("#oai_identifier");
+        var oai_set = $("#oai_set");
+        var oai_from = $("#oai_from");
+        var oai_until = $("#oai_until");
+        if (verb == 'ListRecords'){
+            oai_identifier.prop('disabled', true);
+            oai_set.prop('disabled', false);
+            oai_from.prop('disabled', false);
+            oai_until.prop('disabled', false);
+        }
+        else if (verb == 'GetRecord'){
+            oai_identifier.prop('disabled', false);
+            oai_set.prop('disabled', true);
+            oai_from.prop('disabled', true);
+            oai_until.prop('disabled', true);
+        }
+    }
+//]]>
+</script>
+<style type="text/css">
+    /* Override staff-global.css which hides second, millisecond, and microsecond sliders */
+    .ui_tpicker_second {
+        display: block;
+    }
+</style>
+</head>
+<body id="tools_oai-pmh-harvester_request" class="tools">
+[% INCLUDE 'header.inc' %]
+[% INCLUDE 'cat-search.inc' %]
+    <div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo; <a href="/cgi-bin/koha/tools/tools-home.pl">Tools</a> &rsaquo; <a href="/cgi-bin/koha/tools/oai-pmh-harvester/dashboard.pl">OAI-PMH harvester</a> &rsaquo; Request</div>
+    <div id="doc3" class="yui-t2">
+        <div id="bd">
+            <div id="yui-main">
+                <div class="yui-b">
+                    [% IF ( op == "edit" ) %]
+                        <h1>Edit OAI-PMH request</h1>
+                    [% ELSE %]
+                        <h1>New OAI-PMH request</h1>
+                    [% END %]
+                    [% IF ( test_parameters ) %]
+                        [% IF ( errors.size ) %]
+                            <div class="dialog message"><span class="text-danger">Tests failed!</span></div>
+                        [% ELSE %]
+                            <div class="dialog message"><span class="text-success">Tests succeeded!</span></div>
+                        [% END %]
+                    [% END %]
+                    <form action="/cgi-bin/koha/tools/oai-pmh-harvester/request.pl" method="post" name="entry-form">
+                        [% IF ( op == "new" ) %]
+                            <input type="hidden" name="op" value="create" />
+                        [% ELSIF ( op == "edit" ) %]
+                             <input type="hidden" name="op" value="update" />
+                        [% ELSE %]
+                            <input type="hidden" name="op" value="[% op %]" />
+                        [% END %]
+                        [% IF ( id ) %]
+                            <input type="hidden" name="id" value="[% id %]" />
+                        [% END %]
+                        <fieldset class="rows">
+                            <ol>
+                                <li>
+                                    <label for="name">Name:</label>
+                                    <input type="text" size="30" id="name" name="name" value="[% oai_pmh_request.name %]"/>
+                                    <span class="help">This is just a short name to help in managing requests.</span>
+                                </li>
+                            </ol>
+                        </fieldset>
+                        <fieldset class="rows">
+                            <legend>HTTP parameters:</legend>
+                            <ol>
+                                <li>
+                                    <label for="http_url">URL:</label>
+                                    <input type="text" size="30" id="http_url" name="http_url" value="[% oai_pmh_request.http_url %]">
+                                    [% IF (errors.http_url.malformed) %]<span class="error">[This must be a properly formatted HTTP or HTTPS URL.]</span>[% END %]
+                                    [% IF (errors.http.404) %]<span class="error">[Cannot find address specified by this URL.]</span>[% END %]
+                                    [% IF (errors.http.401) %]<span class="error">[Permission denied to access this URL.]</span>[% END %]
+                                    [% IF (errors.http.generic) %]<span class="error">[Unable to access this URL.]</span>[% END %]
+                                </li>
+                            </ol>
+                            <span class="help">The following parameters are not required by all OAI-PMH repositories, so they may be optional for this task.</span>
+                            <ol>
+                                <li>
+                                    <label for="http_username">Username:</label>
+                                    <input type="text" size="30" id="http_username" name="http_username" value="[% oai_pmh_request.http_username %]">
+                                </li>
+                                <li>
+                                    <label for="http_password">Password:</label>
+                                    <input type="text" size="30" id="http_password" name="http_password" value="[% oai_pmh_request.http_password %]">
+                                </li>
+                                <li>
+                                    <label for="http_realm">Realm:</label>
+                                    <input type="text" size="30" id="http_realm" name="http_realm" value="[% oai_pmh_request.http_realm %]">
+                                </li>
+                            </ol>
+                        </fieldset>
+                        <fieldset class="rows">
+                            <legend>OAI-PMH parameters:</legend>
+                            <ol>
+                                <li>
+                                    <label for="oai_verb">Verb:</label>
+                                    <select id="oai_verb" name="oai_verb">
+                                        [% IF ( oai_pmh_request.oai_verb == "ListRecords" ) %]
+                                        <option value="ListRecords" selected="selected">ListRecords</option>
+                                        [% ELSE %]
+                                        <option value="ListRecords">ListRecords</option>
+                                        [% END %]
+                                        [% IF ( oai_pmh_request.oai_verb == "GetRecord" ) %]
+                                        <option value="GetRecord" selected="selected">GetRecord</option>
+                                        [% ELSE %]
+                                        <option value="GetRecord">GetRecord</option>
+                                        [% END %]
+                                    </select>
+                                </li>
+                                <li>
+                                    <label for="oai_metadataPrefix">Metadata prefix:</label>
+                                    <input type="text" size="30" id="oai_metadataPrefix" name="oai_metadataPrefix" value="[% oai_pmh_request.oai_metadataPrefix %]">
+                                    [% IF (errors.oai_metadataPrefix.unavailable) %]<span class="error">[This metadataPrefix is unavailable from this OAI-PMH provider.]</span>[% END %]
+                                    [% IF (errors.oai_metadataPrefix.missing) %]<span class="error">[metadataPrefix is a required field for an OAI-PMH request.]</span>[% END %]
+                                </li>
+                                <li>
+                                    <label for="oai_identifier">Identifier:</label>
+                                    <input type="text" size="30" id="oai_identifier" name="oai_identifier" value="[% oai_pmh_request.oai_identifier %]">
+                                    [% IF (errors.oai_identifier.missing) %]<span class="error">[Identifier is a required field when using GetRecord for an OAI-PMH request.]</span>[% END %]
+                                </li>
+                                <li>
+                                    <label for="oai_set">Set:</label>
+                                    <input type="text" size="30" id="oai_set" name="oai_set" value="[% oai_pmh_request.oai_set %]">
+                                    [% IF (errors.oai_set.unavailable) %]<span class="error">[This set is unavailable from this OAI-PMH provider.]</span>[% END %]
+                                </li>
+                                [% IF (errors.oai.granularity_mismatch) %]<span class="error">[You must specify the same granularity for both From and Until.]</span>[% END %]
+                                <li>
+                                    <label for="oai_from">From:</label>
+                                    <input type="text" size="30" class="datetime_utc" id="oai_from" name="oai_from" value="[% oai_pmh_request.oai_from %]">
+                                    <span class="help">This value will be treated as UTC time. Note that some repositories only support YYYY-MM-DD datestamps.</span>
+                                    [% IF (errors.oai_from.malformed) %]<span class="error">[This must be in YYYY-MM-DD or YYYY-MM-DDThh:mm:ssZ format.]</span>[% END %]
+                                    [% IF (errors.oai_from.unavailable) %]<span class="error">[This granularity is unsupported by this OAI-PMH provider.]</span>[% END %]
+                                </li>
+                                <li>
+                                    <label for="oai_until">Until:</label>
+                                    <input type="text" size="30" class="datetime_utc" id="oai_until" name="oai_until" value="[% oai_pmh_request.oai_until %]">
+                                    <span class="help">This value will be treated as UTC time. Note that some repositories only support YYYY-MM-DD datestamps.</span>
+                                    [% IF (errors.oai_until.malformed) %]<span class="error">[This must be in YYYY-MM-DD or YYYY-MM-DDThh:mm:ssZ format.]</span>[% END %]
+                                    [% IF (errors.oai_until.unavailable) %]<span class="error">[This granularity is unsupported by this OAI-PMH provider.]</span>[% END %]
+                                </li>
+                            </ol>
+                        </fieldset>
+                        <fieldset class="rows">
+                            <legend>Import parameters:</legend>
+                            <ol>
+                                <li>
+                                    <label for="import_filter">Filter:</label>
+                                    [% IF ( oai_pmh_request.import_filter == "default" ) %]
+                                        <input type="text" size="30" id="import_filter" name="import_filter" value="default">
+                                    [% ELSE %]
+                                        <input type="text" size="30" id="import_filter" name="import_filter" value="[% oai_pmh_request.import_filter %]">
+                                    [% END %]
+                                    <span class="help">If no filter is entered, the default filter will be used.</span>
+                                </li>
+                                <li>
+                                    <label for="import_framework_code">Framework code:</label>
+                                    <select id="import_framework_code" name="import_framework_code">
+                                        <option value="">Default framework</option>
+                                        [% FOREACH framework IN frameworks %]
+                                            [% IF ( oai_pmh_request.import_framework_code == framework.frameworkcode ) %]
+                                                <option selected="selected" value="[% framework.frameworkcode %]">[% framework.frameworktext %]</option>
+                                            [% ELSE %]
+                                                <option value="[% framework.frameworkcode %]">[% framework.frameworktext %]</option>
+                                            [% END %]
+                                        [% END %]
+                                    </select>
+                                </li>
+                                <li>
+                                    <label for="import_record_type">Record type:</label>
+                                    <select id="import_record_type" name="import_record_type">
+                                        <option value="biblio">Bibliographic</option>
+                                    </select>
+                                </li>
+                                <li>
+                                    <label for="import_matcher_code">Record matcher:</label>
+                                    <select id="import_matcher_code" name="import_matcher_code">
+                                        <option value="">None</option>
+                                        [% FOREACH matcher IN matchers %]
+                                            [% IF ( oai_pmh_request.import_matcher_code == matcher.code ) %]
+                                                <option value="[% matcher.code %]" selected="selected">[% matcher.description %]</option>
+                                            [% ELSE %]
+                                                <option value="[% matcher.code %]">[% matcher.description %]</option>
+                                            [% END %]
+                                        [% END %]
+                                    </select>
+                                    <span class="help">See <a href="/cgi-bin/koha/admin/matching-rules.pl">record matching rules</a> to add or edit rules.</span>
+                                </li>
+                            </ol>
+                        </fieldset>
+                        <fieldset class="rows">
+                            <legend>Download parameters:</legend>
+                            <ol>
+                                <li>
+                                    <label for="interval">Interval (seconds): </label>
+                                    <input type="text" id="interval" name="interval" value="[% oai_pmh_request.interval %]" size="4">
+                                    <span class="help">The download request will be repeated in intervals of this many seconds. Enter "0" if you want the task to only happen once.</span>
+                                </li>
+                            </ol>
+                        </fieldset>
+                        <fieldset class="action">
+                            <input type="submit" name="test_parameters" value="Test parameters">
+                            <input type="submit" name="save" value="Save">
+                            <a class="cancel" href="/cgi-bin/koha/tools/oai-pmh-harvester/dashboard.pl">Cancel</a>
+                        </fieldset>
+                    </form>
+                </div>
+            </div>
+            <div class="yui-b">
+                [% INCLUDE 'tools-menu.inc' %]
+            </div>
+        </div>
+[% INCLUDE 'intranet-bottom.inc' %]

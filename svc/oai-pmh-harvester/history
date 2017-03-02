@@ -1,0 +1,132 @@
+#!/usr/bin/perl
+
+# Copyright 2017 Prosentient Systems
+#
+# This file is part of Koha.
+#
+# Koha is free software; you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 3 of the License, or (at your option) any later
+# version.
+#
+# Koha is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with Koha; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+use Modern::Perl;
+use C4::Auth qw(check_cookie_auth haspermission get_session);
+use JSON;
+use Koha::Database;
+
+my $input = new CGI;
+
+my ( $auth_status, $sessionID ) =
+  check_cookie_auth( $input->cookie('CGISESSID'));
+
+if ( $auth_status ne "ok" ) {
+    exit 0;
+}
+
+my $data = {
+    data => [],
+    recordsTotal => 0,
+    recordsFiltered => 0,
+    draw => undef,
+};
+
+my $length = 10;
+my $start = 0;
+my @order_by = ();
+my @search = ();
+
+if ($input->request_method eq "POST"){
+    my $postdata = $input->param('POSTDATA');
+    my $request = from_json($postdata);
+    $data->{draw} = int( $request->{draw} ) if $request->{draw};
+    $length = $request->{length} if $request->{length};
+    $start = $request->{start} if $request->{start};
+    if (my $search = $request->{search}){
+        my $value = $search->{value};
+        if ($value){
+            foreach my $column (@{$request->{columns}}){
+                if ($column->{data} && $column->{searchable}){
+                    my $search_element = {
+                        $column->{data} => { 'like', "%".$value."%" },
+                    };
+                    push(@search,$search_element);
+                }
+            }
+        }
+    }
+    if (my $order = $request->{order}){
+        foreach my $element (@$order){
+            my $dir = $element->{dir};
+            my $column_index = $element->{column};
+            my $column = $request->{columns}->[$column_index];
+            my $orderable = $column->{orderable};
+            if ($orderable){
+                my $column_name = $column->{data};
+                my $direction;
+                if ($dir){
+                    if ($dir eq "asc" || $dir eq "desc"){
+                        $direction = "-$dir";
+                    }
+                }
+                if ($column_name && $direction){
+                    my $single_order = {
+                        $direction => $column_name,
+                    };
+                    push(@order_by,$single_order);
+                }
+            }
+        }
+    }
+}
+
+my $page = ( $start / $length ) + 1;
+my $schema = Koha::Database->new()->schema();
+if ($schema){
+    my $rs = $schema->resultset("OaiHarvesterHistory");
+    my $results = $rs->search(
+        \@search,
+        {
+            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+            page => $page,
+            rows => $length,
+            order_by => \@order_by,
+        },
+    );
+    my $count = $rs->count;
+    my $filtered_count = $results->pager->total_entries;
+    my @rows = ();
+    while (my $row = $results->next){
+        $row->{imported_record} = '';
+        if ($row->{record_type} eq "biblio"){
+            my $harvested_biblio = $schema->resultset("OaiHarvesterBiblio")->find(
+                    {
+                        oai_repository => $row->{repository},
+                        oai_identifier => $row->{header_identifier},
+                    },
+                    { key => "oai_record" },
+            );
+            $row->{imported_record} = $harvested_biblio->biblionumber->id if $harvested_biblio;
+        }
+        push(@rows,$row);
+    }
+    if ($count){
+        $data->{recordsTotal} = $count;
+        $data->{recordsFiltered} = $filtered_count;
+        $data->{data} = \@rows if @rows;
+    }
+}
+
+binmode STDOUT, ":encoding(UTF-8)";
+print $input->header(
+    -type => 'application/json',
+    -charset => 'UTF-8'
+);
+print to_json($data, { pretty => 1, });

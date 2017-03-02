@@ -26,6 +26,7 @@ use constant DEFAULT_LOGS_PURGEDAYS               => 180;
 use constant DEFAULT_SEARCHHISTORY_PURGEDAYS      => 30;
 use constant DEFAULT_SHARE_INVITATION_EXPIRY_DAYS => 14;
 use constant DEFAULT_DEBARMENTS_PURGEDAYS         => 30;
+use constant DEFAULT_IMPORTOAI_PURGEDAYS          => 30;
 
 BEGIN {
     # find Koha's Perl modules
@@ -44,7 +45,7 @@ use Koha::UploadedFiles;
 
 sub usage {
     print STDERR <<USAGE;
-Usage: $0 [-h|--help] [--sessions] [--sessdays DAYS] [-v|--verbose] [--zebraqueue DAYS] [-m|--mail] [--merged] [--import DAYS] [--logs DAYS] [--searchhistory DAYS] [--restrictions DAYS] [--all-restrictions] [--fees DAYS] [--temp-uploads] [--temp-uploads-days DAYS] [--uploads-missing 0|1 ]
+Usage: $0 [-h|--help] [--sessions] [--sessdays DAYS] [-v|--verbose] [--zebraqueue DAYS] [-m|--mail] [--merged] [--import DAYS] [--logs DAYS] [--searchhistory DAYS] [--restrictions DAYS] [--all-restrictions] [--fees DAYS] [--temp-uploads] [--temp-uploads-days DAYS] [--uploads-missing 0|1 ] [--importoai DAYS ]
 
    -h --help          prints this help message, and exits, ignoring all
                       other options
@@ -82,6 +83,8 @@ Usage: $0 [-h|--help] [--sessions] [--sessdays DAYS] [-v|--verbose] [--zebraqueu
    --temp-uploads-days DAYS Override the corresponding preference value.
    --uploads-missing FLAG Delete upload records for missing files when FLAG is true, count them otherwise
    --oauth-tokens     Delete expired OAuth2 tokens
+   --importoai DAYS    purge OAI-PMH records from import_oai table older than DAYS
+                       days. Defaults to 30 days if no days specified.
 USAGE
     exit $_[0];
 }
@@ -108,6 +111,7 @@ my $temp_uploads;
 my $temp_uploads_days;
 my $uploads_missing;
 my $oauth_tokens;
+my $importoai_days;
 
 GetOptions(
     'h|help'            => \$help,
@@ -132,6 +136,7 @@ GetOptions(
     'temp-uploads-days:i' => \$temp_uploads_days,
     'uploads-missing:i' => \$uploads_missing,
     'oauth-tokens'      => \$oauth_tokens,
+    'importoai:i'       => \$importoai_days,
 ) || usage(1);
 
 # Use default values
@@ -143,6 +148,7 @@ $mail              = DEFAULT_MAIL_PURGEDAYS               if defined($mail)     
 $pSearchhistory    = DEFAULT_SEARCHHISTORY_PURGEDAYS      if defined($pSearchhistory)    && $pSearchhistory == 0;
 $pListShareInvites = DEFAULT_SHARE_INVITATION_EXPIRY_DAYS if defined($pListShareInvites) && $pListShareInvites == 0;
 $pDebarments       = DEFAULT_DEBARMENTS_PURGEDAYS         if defined($pDebarments)       && $pDebarments == 0;
+$importoai_days    = DEFAULT_IMPORTOAI_PURGEDAYS          if defined($importoai_days)    && $importoai_days == 0;
 
 if ($help) {
     usage(0);
@@ -166,6 +172,7 @@ unless ( $sessions
     || $temp_uploads
     || defined $uploads_missing
     || $oauth_tokens
+    || $importoai_days
 ) {
     print "You did not specify any cleanup work for the script to do.\n\n";
     usage(1);
@@ -342,6 +349,12 @@ if ($oauth_tokens) {
 
     my $count = int Koha::OAuthAccessTokens->search({ expires => { '<=', time } })->delete;
     say "Removed $count expired OAuth2 tokens" if $verbose;
+}
+
+if ($importoai_days){
+    my $sql = "DELETE FROM import_oai WHERE date(upload_timestamp) < (date_sub(curdate(), INTERVAL ? DAY))";
+    my $sth = $dbh->prepare($sql);
+    $sth->execute($importoai_days) or die $dbh->errstr;
 }
 
 exit(0);

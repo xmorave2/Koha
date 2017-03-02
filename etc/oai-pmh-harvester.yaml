@@ -1,0 +1,22 @@
+---
+#Harvester
+socket: 'unix:__OAI_RUN_DIR__/harvesterd.sock'
+
+logfile: '__LOG_DIR__/oai-pmh-harvester.log'
+loglevel: 'WARN'
+
+pidfile: '__OAI_RUN_DIR__/harvesterd.pid'
+
+statefile: '__OAI_LIB_DIR__/harvesterd.state'
+
+spooldir: '__OAI_SPOOL_DIR__'
+
+#Downloader
+download_workers: 1
+download_module: 'Koha::OAI::Harvester::Worker::Download::Stream'
+download_batch: 100
+
+#Importer
+import_workers: 1
+import_poll: 5
+import_module: 'Koha::OAI::Harvester::Worker::Import'

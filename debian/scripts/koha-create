@@ -113,6 +113,9 @@ generate_config_file() {
         -e "s/__PLUGINS_DIR__/\/var\/lib\/koha\/$name\/plugins/g" \
         -e "s/__MEMCACHED_NAMESPACE__/$MEMCACHED_NAMESPACE/g" \
         -e "s/__MEMCACHED_SERVERS__/$MEMCACHED_SERVERS/g" \
+        -e "s/__OAI_RUN_DIR__/\/var\/run\/koha\/$name\/oai-pmh-harvester/g" \
+        -e "s/__OAI_LIB_DIR__/\/var\/lib\/koha\/$name\/oai-pmh-harvester/g" \
+        -e "s/__OAI_SPOOL_DIR__/\/var\/spool\/koha\/$name\/oai-pmh-harvester/g" \
         "/etc/koha/$1" > "$2"
 
 }
@@ -655,6 +658,10 @@ eof
         "/etc/koha/sites/$name/zebra-authorities-dom.cfg"
     generate_config_file zebra.passwd.in \
         "/etc/koha/sites/$name/zebra.passwd"
+
+    # Generate and install OAI-PMH harvester config file
+    generate_config_file oai-pmh-harvester.yaml.in \
+        "/etc/koha/sites/$name/oai-pmh-harvester.yaml"
 
     # Create a GPG-encrypted file for requesting a DB to be set up.
     if [ "$op" = request ]

@@ -360,6 +360,9 @@ my $target_map = {
   './skel/var/lib/koha/zebradb/biblios/tmp'  => { target => 'ZEBRA_DATA_DIR', trimdir => 6 },
   './skel/var/lock/koha/zebradb/rebuild' => { target => 'ZEBRA_LOCK_DIR', trimdir => 6 },
   './skel/var/lib/koha/plugins' => { target => 'PLUGINS_DIR', trimdir => 6 },
+  './skel/var/lib/koha/oai-pmh-harvester' => { target => 'OAI_LIB_DIR', trimdir => 6 },
+  './skel/var/run/koha/oai-pmh-harvester' => { target => 'OAI_RUN_DIR', trimdir => 6 },
+  './skel/var/spool/koha/oai-pmh-harvester' => { target => 'OAI_SPOOL_DIR', trimdir => 6 },
   './sms'                       => 'INTRANET_CGI_DIR',
   './suggestion'                => 'INTRANET_CGI_DIR',
   './svc'                       => 'INTRANET_CGI_DIR',
@@ -594,6 +597,7 @@ my $pl_files = {
          'blib/KOHA_CONF_DIR/koha-conf.xml',
          'blib/KOHA_CONF_DIR/koha-httpd.conf',
          'blib/KOHA_CONF_DIR/log4perl.conf',
+         'blib/KOHA_CONF_DIR/oai-pmh-harvester.yaml',
          'blib/ZEBRA_CONF_DIR/etc/default.idx',
          'blib/MISC_DIR/koha-install-log'
          ],
@@ -1355,6 +1359,9 @@ sub get_target_directories {
         $dirmap{'PLUGINS_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'lib', 'koha', 'plugins');
         $dirmap{'ZEBRA_DATA_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'lib', 'zebradb');
         $dirmap{'ZEBRA_RUN_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'run', 'zebradb');
+        $dirmap{'OAI_RUN_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'run', 'oai-pmh-harvester');
+        $dirmap{'OAI_LIB_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'lib', 'oai-pmh-harvester');
+        $dirmap{'OAI_SPOOL_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'spool', 'oai-pmh-harvester');
     } elsif ($mode eq 'dev') {
         my $curdir = File::Spec->rel2abs(File::Spec->curdir());
         $dirmap{'API_CGI_DIR'} = File::Spec->catdir($curdir, 'api');
@@ -1390,6 +1397,10 @@ sub get_target_directories {
         $dirmap{'PLUGINS_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'lib', 'plugins');
         $dirmap{'ZEBRA_DATA_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'lib', 'zebradb');
         $dirmap{'ZEBRA_RUN_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'run', 'zebradb');
+        $dirmap{'OAI_RUN_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'run', 'oai-pmh-harvester');
+        $dirmap{'OAI_LIB_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'lib', 'oai-pmh-harvester');
+        $dirmap{'OAI_SPOOL_DIR'} =  File::Spec->catdir(@basedir, $package, 'var', 'spool', 'oai-pmh-harvester');
+
     } else {
         # mode is standard, i.e., 'fhs'
         $dirmap{'API_CGI_DIR'} = File::Spec->catdir(@basedir, $package, 'api');
@@ -1414,6 +1425,9 @@ sub get_target_directories {
         $dirmap{'PLUGINS_DIR'} =  File::Spec->catdir(File::Spec->rootdir(), 'var', 'lib', $package, 'plugins');
         $dirmap{'ZEBRA_DATA_DIR'} =  File::Spec->catdir(File::Spec->rootdir(), 'var', 'lib', $package, 'zebradb');
         $dirmap{'ZEBRA_RUN_DIR'} =  File::Spec->catdir(File::Spec->rootdir(), 'var', 'run', $package, 'zebradb');
+        $dirmap{'OAI_RUN_DIR'} =  File::Spec->catdir(File::Spec->rootdir(), 'var', 'run', $package, 'oai-pmh-harvester');
+        $dirmap{'OAI_LIB_DIR'} =  File::Spec->catdir(File::Spec->rootdir(), 'var', 'lib', $package, 'oai-pmh-harvester');
+        $dirmap{'OAI_SPOOL_DIR'} =  File::Spec->catdir(File::Spec->rootdir(), 'var', 'spool', $package, 'oai-pmh-harvester');
     }
 
     _get_env_overrides(\%dirmap);
