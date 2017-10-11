@@ -780,7 +780,8 @@ No patron matched <span class="ex">[% message | html %]</span>
 
 			[% IF ( warndeparture ) %]
 			<li><span class="circ-hlt">Expiration:</span> Patron's card will expire soon.
-            Patron's card expires on [% expiry | $KohaDates %] <a href="/cgi-bin/koha/members/setstatus.pl?borrowernumber=[% borrowernumber %]&amp;destination=circ&amp;reregistration=y">Renew</a> or <a href="/cgi-bin/koha/members/memberentry.pl?op=modify&amp;destination=circ&amp;borrowernumber=[% borrowernumber %]&amp;categorycode=[% categorycode %]">Edit Details</a>
+            Patron's card expires on [% expiry | $KohaDates %] <a href="/cgi-bin/koha/members/setstatus.pl?borrowernumber=[% borrowernumber %]&amp;destination=circ&amp;reregistration=y">Renew</a> or <a href="/cgi-bin/koha/members/memberentry.pl?op=modify&amp;destination=circ&amp;borrowernumber=[% borrowernumber %]&amp;categorycode=[% categorycode %]">Edit Details</a>. 
+            [% IF patron.category.enrolmentfee %]When you renew this patron, it will add an account management fee of amount <span class="circ-hlt">[% patron.category.enrolmentfee | $Price %]</span>.[% END %]
 
 			</li>
 			[% END %]
