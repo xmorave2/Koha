@@ -180,8 +180,6 @@ sub GetCourses {
         $query .= join( ' AND ', @query_keys );
     }
 
-    $query .= " GROUP BY courses.course_id ";
-
     my $dbh = C4::Context->dbh;
     my $sth = $dbh->prepare($query);
     $sth->execute(@query_values);
