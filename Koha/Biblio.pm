@@ -45,6 +45,19 @@ Koha::Biblio - Koha Biblio Object class
 
 =cut
 
+=head3 new
+
+Overloaded I<new> method to set default values
+
+=cut
+
+sub new {
+    my ( $class, $params ) = @_;
+
+    $params->{datecreated} ||= dt_from_string;
+    return $class->SUPER::new($params);
+}
+
 =head3 subtitles
 
 my @subtitles = $biblio->subtitles();

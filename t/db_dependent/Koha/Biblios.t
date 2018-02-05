@@ -19,7 +19,7 @@
 
 use Modern::Perl;
 
-use Test::More tests => 2;
+use Test::More tests => 3;
 
 use C4::Reserves;
 
@@ -44,6 +44,11 @@ my $biblioitem = $schema->resultset('Biblioitem')->new(
         biblionumber => $biblio->id
     }
 )->insert();
+
+subtest 'new' => sub {
+    plan tests => 1;
+    is( $biblio->datecreated, dt_from_string, "datecreated must be set to today if not passed to the constructor" );
+};
 
 subtest 'holds + current_holds' => sub {
     plan tests => 5;
