@@ -251,7 +251,7 @@ sub output_pref {
     if ( $pref =~ m/^iso/ ) {
         $date = $dateonly
           ? $dt->strftime("%Y-%m-%d")
-          : $dt->strftime("%Y-%m-%d $time");
+          : $dt->strftime("%Y-%m-%d %H:%M");
     }
     elsif ( $pref =~ m/^rfc3339/ ) {
         $date = $dt->strftime('%FT%T%z');
