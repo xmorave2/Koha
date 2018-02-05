@@ -141,7 +141,7 @@ sub search_patrons_to_anonymise {
             ( $library ? ( 'old_issues.branchcode' => $library ) : () ),
         },
         {   join     => ["old_issues"],
-            group_by => 'borrowernumber'
+            distinct => 1,
         }
     );
     return Koha::Patrons->_new_from_dbic($rs);
