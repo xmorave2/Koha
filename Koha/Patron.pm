@@ -296,7 +296,7 @@ Returns 1 if the patron is expired or 0;
 sub is_expired {
     my ($self) = @_;
     return 0 unless $self->dateexpiry;
-    return 0 if $self->dateexpiry eq '0000-00-00';
+    return 0 if $self->dateexpiry eq '0000-00-00'; # FIXME Sure about that? Tests must be adapted for sql strict modes
     return 1 if dt_from_string( $self->dateexpiry ) < dt_from_string->truncate( to => 'day' );
     return 0;
 }
