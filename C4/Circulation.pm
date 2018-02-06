@@ -3975,6 +3975,7 @@ sub GetTopIssues {
 
     my $dbh = C4::Context->dbh;
     my $query = q{
+        SELECT * FROM (
         SELECT b.biblionumber, b.title, b.author, bi.itemtype, bi.publishercode,
           bi.place, bi.publicationyear, b.copyrightdate, bi.pages, bi.size,
           i.ccode, SUM(i.issues) AS count
@@ -4012,11 +4013,13 @@ sub GetTopIssues {
     }
 
     $query .= q{
-        GROUP BY b.biblionumber
-        HAVING count > 0
+        GROUP BY b.biblionumber, b.title, b.author, bi.itemtype, bi.publishercode,
+          bi.place, bi.publicationyear, b.copyrightdate, bi.pages, bi.size,
+          i.ccode
         ORDER BY count DESC
     };
 
+    $query .= q{ ) xxx WHERE count > 0 };
     $count = int($count);
     if ($count > 0) {
         $query .= "LIMIT $count";
