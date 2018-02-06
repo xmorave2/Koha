@@ -36,6 +36,7 @@ my $csv_profile = Koha::CsvProfile->new({
     type => 'export_basket',
     csv_separator => ',',
     content => 'autor=biblio.author|title=biblio.title|quantity=aqorders.quantity',
+    description => 'csv profile',
 })->store;
 
 my $csv_profile2 = Koha::CsvProfile->new({
@@ -43,6 +44,7 @@ my $csv_profile2 = Koha::CsvProfile->new({
     type => 'export_basket',
     csv_separator => ',',
     content => 'biblio.author | title = biblio.title|quantity=aqorders.quantity',
+    description => 'csv profile 2',
 })->store;
 
 my $basketno;
