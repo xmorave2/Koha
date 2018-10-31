@@ -29,23 +29,26 @@ use HTTP::OAI;
 
 =head1 NAME
 
-Koha::OAI::Harvester::Request -
+Koha::OAI::Harvester::Request
 
-=head1 API
+=head1 SYNOPSIS
 
-=head2 Class Methods
+    use Koha::OAI::Harvester::Request;
+    my $request = Koha::OAI::Harvester::Requests->find($id);
 
-=cut
-
-
-
-=head3 _type
+=head1 METHODS
 
 =cut
 
 sub _type {
     return 'OaiHarvesterRequest';
 }
+
+=head2 validate
+
+    Method to validate the parameters of an OAI-PMH request
+
+=cut
 
 sub validate {
     my ($self) = @_;

@@ -675,6 +675,65 @@ modules:
           columnname: spent
 
   tools:
+    oai-pmh-harvester-dashboard:
+      saved-table:
+        -
+          columnname: name
+        -
+          columnname: url
+        -
+          columnname: set
+        -
+          columnname: from
+        -
+          columnname: until
+        -
+          columnname: interval
+
+      submitted-table:
+        -
+          columnname: name
+        -
+          columnname: url
+        -
+          columnname: set
+        -
+          columnname: from
+        -
+          columnname: until
+        -
+          columnname: interval
+        -
+          columnname: "effective from"
+        -
+          columnname: "effective until"
+        -
+          columnname: "pending imports"
+        -
+          columnname: status
+        -
+          columnname: error
+
+      history-table:
+        -
+          columnname: id
+        -
+          columnname: repository
+        -
+          columnname: identifier
+        -
+          columnname: datestamp
+        -
+          columnname: "upstream status"
+        -
+          columnname: "import status"
+        -
+          columnname: "import timestamp"
+        -
+          columnname: "imported record"
+        -
+          columnname: "downloaded record"
+
     notices:
       lettert:
         -

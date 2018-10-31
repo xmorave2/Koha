@@ -23,9 +23,22 @@ use XML::LibXML::Reader;
 use IO::Handle;
 use JSON;
 
-=head1 API
+=head1 NAME
 
-=head2 Class Methods
+Koha::OAI::Harvester::Downloader
+
+=head1 SYNOPSIS
+
+    use Koha::OAI::Harvester::Downloader;
+    my $oai_downloader = Koha::OAI::Harvester::Downloader->new();
+
+    This class is used within a Koha::OAI::Harvester::Work::Download:: module.
+
+=head1 METHODS
+
+=head2 new
+
+    Create object
 
 =cut
 
@@ -96,7 +109,7 @@ sub BuildURL {
     }
 }
 
-=head2 OpenXMLStream
+=head2 GetXMLStream
 
     Fork a child process to send the HTTP request, which sends chunks
     of XML via a pipe to the parent process.
@@ -167,6 +180,13 @@ sub _request {
         return;
     }
 }
+
+=head2 ParseXMLStream
+
+    Parse XML using XML::LibXML::Reader from a file handle (e.g. a stream)
+
+=cut
+
 
 sub ParseXMLStream {
     my ($self, $args) = @_;
@@ -244,6 +264,13 @@ sub ParseXMLStream {
         warn "ParseXMLStream() requires a 'file_handle' argument.";
     }
 }
+
+=head2 harvest
+
+    Given a URL and a user-agent, start downloading OAI-PMH records from
+    that URL.
+
+=cut
 
 sub harvest {
     my ($self,$args) = @_;

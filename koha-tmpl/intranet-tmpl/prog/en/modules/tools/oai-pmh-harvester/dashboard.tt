@@ -1,107 +1,10 @@
+[% USE ColumnsSettings %]
+[% SET footerjs = 1 %]
 [% INCLUDE 'doc-head-open.inc' %]
 <title>Koha &rsaquo; Tools &rsaquo; OAI-PMH harvester</title>
 [% INCLUDE 'doc-head-close.inc' %]
-[% INCLUDE 'datatables.inc' %]
 [% dashboard_page = '/cgi-bin/koha/tools/oai-pmh-harvester/dashboard.pl' %]
 [% request_page = '/cgi-bin/koha/tools/oai-pmh-harvester/request.pl' %]
-<script type="text/javascript">
-//<![CDATA[
-    $(document).ready(function() {
-        $('#dashboard-items').tabs();
-        [% IF ( result.start.defined || result.stop.defined || result.delete.defined ) %]
-            $('#dashboard-items').tabs("option","active",1);
-        [% END %]
-
-        var saved_table = $('#saved-table').DataTable({});
-        var submitted_table = $('#submitted-table').DataTable({});
-        var history_table = $('#history-table').DataTable({
-            serverSide: true,
-            searching: true,
-            processing: true,
-            ajax: {
-                "url": '/cgi-bin/koha/svc/oai-pmh-harvester/history',
-                contentType: 'application/json',
-                type: 'POST',
-                data: function ( d ) {
-                    return JSON.stringify( d );
-                },
-                dataSrc: function (json){
-                    var recordsTotal = json.recordsTotal;
-                    if(recordsTotal){
-                        $('#import_count').text( "("+recordsTotal+")" );
-                    }
-                    return json.data;
-                }
-            },
-            columns: [
-                { data: 'import_oai_id', },
-                { data: 'repository', },
-                { data: 'header_identifier', },
-                { data: 'header_datestamp', },
-                {
-                    data: 'header_status', render: function (data, type, full, meta){
-                        var display_string = _("Active");
-                        if (data == "deleted"){
-                            display_string = _("Deleted");
-                        }
-                        return display_string;
-                    }
-                },
-                {
-                    data: 'status', render: function (data, type, full, meta){
-                        var display_string = data;
-                        if (data == "added"){
-                            display_string = _("Added");
-                        }
-                        else if (data == "error"){
-                            display_string = _("Error");
-                        }
-                        else if (data == "not_found"){
-                            display_string = _("Not found");
-                        }
-                        else if (data == "updated"){
-                            display_string = _("Updated");
-                        }
-                        return display_string;
-                    }
-                },
-                { data: 'upload_timestamp', },
-                {
-                    data: 'imported_record', render: function (data, type, full, meta){
-                        var display_string = data;
-                        var record_type = (full.record_type) ? full.record_type : 'biblio';
-                        if (data && record_type == 'biblio'){
-                            var link_text = _("View biblio record");
-                            var link = '<a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber='+data+'">'+link_text+'</a>';
-                            display_string = link;
-                        }
-                        return display_string;
-                    }, searchable: false
-
-                },
-                {
-                    data: 'import_oai_id', render: function (data, type, full, meta){
-                        var display_string = data;
-                        var link_text = _("View record");
-                        var link = '<a href="/cgi-bin/koha/tools/oai-pmh-harvester/record.pl?import_oai_id='+data+'">'+link_text+'</a>';
-                        display_string = link;
-                        return display_string;
-                    }, searchable: false
-                },
-            ],
-            //In theory, it would be nice to sort in descending order, but
-            //it causes severe paging issues the data is frequently updated.
-            //Caching would make the paging more stable, but the results would be stale.
-            order: [
-                [ 0, 'asc' ],
-            ]
-        });
-        $('#refresh-button').click(function(){
-            history_table.ajax.reload( null, false );
-        });
-    });
-//]]>
-</script>
 <style type="text/css">
     a.paginate_button {
         padding: 2px;
@@ -118,7 +21,7 @@
                 <div class="yui-b">
                     <h1>OAI-PMH harvester</h1>
                     <div id="toolbar" class="btn-toolbar">
-                        <a id="new-request" class="btn btn-default btn-sm" href="[% request_page %]?op=new"><i class="fa fa-plus"></i> New request</a>
+                        <a id="new-request" class="btn btn-default btn-sm" href="[% request_page | url %]?op=new"><i class="fa fa-plus"></i> New request</a>
                     </div>
                     [% IF ( harvester.offline ) %]
                         <div class="alert">
@@ -128,10 +31,10 @@
                     <div id="dashboard-items" class="toptabs">
                         <ul>
                             <li>
-                                <a href="#saved_requests">Saved requests <span id="saved_count">([% saved_requests.size %])</span></a>
+                                <a href="#saved_requests">Saved requests <span id="saved_count">([% saved_requests.size | html %])</span></a>
                             </li>
                             <li>
-                                <a href="#submitted_requests">Submitted requests <span id="submitted_count">([% submitted_requests.size %])</span></a>
+                                <a href="#submitted_requests">Submitted requests <span id="submitted_count">([% submitted_requests.size | html %])</span></a>
                             </li>
                             <li>
                                 <a href="#imports">Import history <span id="import_count">(0)</span></a>
@@ -184,15 +87,15 @@
                                 [% IF ( submitted_requests ) %]
                                     [% FOREACH submitted_request IN submitted_requests %]
                                         <tr>
-                                            <td>[% submitted_request.name %]</td>
-                                            <td>[% submitted_request.parameters.oai_pmh.baseURL %]</td>
-                                            <td>[% submitted_request.parameters.oai_pmh.set %]</td>
-                                            <td>[% submitted_request.parameters.oai_pmh.from %]</td>
-                                            <td>[% submitted_request.parameters.oai_pmh.until %]</td>
-                                            <td>[% submitted_request.interval %]</td>
-                                            <td>[% submitted_request.effective_from %]</td>
-                                            <td>[% submitted_request.effective_until %]</td>
-                                            <td>[% submitted_request.pending_imports %]</td>
+                                            <td>[% submitted_request.name | html %]</td>
+                                            <td>[% submitted_request.parameters.oai_pmh.baseURL | html %]</td>
+                                            <td>[% submitted_request.parameters.oai_pmh.set | html %]</td>
+                                            <td>[% submitted_request.parameters.oai_pmh.from | html %]</td>
+                                            <td>[% submitted_request.parameters.oai_pmh.until | html %]</td>
+                                            <td>[% submitted_request.interval | html %]</td>
+                                            <td>[% submitted_request.effective_from | html %]</td>
+                                            <td>[% submitted_request.effective_until | html %]</td>
+                                            <td>[% submitted_request.pending_imports |html %]</td>
                                             <td>
                                                 [% IF ( submitted_status = submitted_request.status ) %]
                                                     [% IF ( submitted_status == "new" ) %]
@@ -214,13 +117,13 @@
                                                     <a class="btn btn-default btn-xs dropdown-toggle" role="button" data-toggle="dropdown" href="#">Actions <span class="caret"></span></a>
                                                     <ul class="dropdown-menu pull-right" role="menu">
                                                           <li>
-                                                              <a href="[% dashboard_page %]?op=start&uuid=[% submitted_request.uuid %]"><i class="fa fa-play"></i> Start</a>
+                                                              <a href="[% dashboard_page | url %]?op=start&uuid=[% submitted_request.uuid | url %]"><i class="fa fa-play"></i> Start</a>
                                                           </li>
                                                           <li>
-                                                              <a href="[% dashboard_page %]?op=stop&uuid=[% submitted_request.uuid %]"><i class="fa fa-stop"></i> Stop</a>
+                                                              <a href="[% dashboard_page | url %]?op=stop&uuid=[% submitted_request.uuid | url %]"><i class="fa fa-stop"></i> Stop</a>
                                                           </li>
                                                           <li>
-                                                              <a href="[% dashboard_page %]?op=delete&uuid=[% submitted_request.uuid %]"><i class="fa fa-trash"></i> Delete</a>
+                                                              <a href="[% dashboard_page | url %]?op=delete&uuid=[% submitted_request.uuid | url %]"><i class="fa fa-trash"></i> Delete</a>
                                                           </li>
                                                     </ul>
                                                 </div>
@@ -264,20 +167,20 @@
                                 [% IF ( saved_requests ) %]
                                     [% FOREACH saved_request IN saved_requests %]
                                         <tr>
-                                            <td>[% saved_request.name %]</td>
-                                            <td>[% saved_request.http_url %]</td>
-                                       <!-- <td>[% saved_request.oai_verb %]</td>
-                                            <td>[% saved_request.oai_metadataPrefix %]</td>
-                                            <td>[% saved_request.oai_identifier %]</td> -->
-                                            <td>[% saved_request.oai_set %]</td>
-                                            <td>[% saved_request.oai_from %]</td>
-                                            <td>[% saved_request.oai_until %]</td>
-                                            <td>[% saved_request.interval %]</td>
+                                            <td>[% saved_request.name | html %]</td>
+                                            <td>[% saved_request.http_url | html %]</td>
+                                       <!-- <td>[% saved_request.oai_verb | html %]</td>
+                                            <td>[% saved_request.oai_metadataPrefix | html %]</td>
+                                            <td>[% saved_request.oai_identifier | html %]</td> -->
+                                            <td>[% saved_request.oai_set | html %]</td>
+                                            <td>[% saved_request.oai_from | html %]</td>
+                                            <td>[% saved_request.oai_until | html %]</td>
+                                            <td>[% saved_request.interval | html %]</td>
                                        <!-- <td>
                                                 [% IF ( saved_request.import_filter == "default" ) %]
                                                     <span>Default</span>
                                                 [% ELSE %]
-                                                    [% saved_request.import_filter %]
+                                                    [% saved_request.import_filter | html %]
                                                 [% END %]
                                             </td>
                                             <td>
@@ -288,16 +191,16 @@
                                                     [% END %]
                                                 [% END %]
                                                 [% IF ( display_framework ) %]
-                                                    [% display_framework.frameworktext %]
+                                                    [% display_framework.frameworktext | html %]
                                                 [% ELSE %]
-                                                    [% saved_request.import_framework_code %]
+                                                    [% saved_request.import_framework_code | html %]
                                                 [% END %]
                                             </td>
                                             <td>
                                                 [% IF ( saved_request.import_record_type == "biblio" ) %]
                                                     <span>Bibliographic</span>
                                                 [% ELSE %]
-                                                    [% saved_request.import_record_type %]
+                                                    [% saved_request.import_record_type | html %]
                                                 [% END %]
                                             </td>
                                             <td>
@@ -308,9 +211,9 @@
                                                     [% END %]
                                                 [% END %]
                                                 [% IF ( display_matcher ) %]
-                                                    [% display_matcher.description %]
+                                                    [% display_matcher.description | html %]
                                                 [% ELSE %]
-                                                    [% saved_request.import_matcher_code %]
+                                                    [% saved_request.import_matcher_code | html %]
                                                 [% END %]
                                             </td> -->
                                             <td>
@@ -318,16 +221,16 @@
                                                     <a class="btn btn-default btn-xs dropdown-toggle" role="button" data-toggle="dropdown" href="#">Actions <span class="caret"></span></a>
                                                     <ul class="dropdown-menu pull-right" role="menu">
                                                           <li>
-                                                              <a href="[% request_page %]?op=edit&id=[% saved_request.id %]"><i class="fa fa-pencil"></i> Edit</a>
+                                                              <a href="[% request_page | url %]?op=edit&id=[% saved_request.id | url %]"><i class="fa fa-pencil"></i> Edit</a>
                                                           </li>
                                                           <li>
-                                                              <a href="[% request_page %]?op=new&id=[% saved_request.id %]"><i class="fa fa-copy"></i> Copy</a>
+                                                              <a href="[% request_page | url %]?op=new&id=[% saved_request.id | url %]"><i class="fa fa-copy"></i> Copy</a>
                                                           </li>
                                                           <li>
-                                                              <a href="[% dashboard_page %]?op=send&id=[% saved_request.id %]"><i class="fa fa-send"></i> Submit</a>
+                                                              <a href="[% dashboard_page | url %]?op=send&id=[% saved_request.id | url %]"><i class="fa fa-send"></i> Submit</a>
                                                           </li>
                                                           <li>
-                                                            <a href="[% request_page %]?op=delete&id=[% saved_request.id %]"><i class="fa fa-trash"></i> Delete</a>
+                                                            <a href="[% request_page | url %]?op=delete&id=[% saved_request.id | url %]"><i class="fa fa-trash"></i> Delete</a>
                                                           </li>
                                                     </ul>
                                                 </div>
@@ -366,4 +269,110 @@
                 [% INCLUDE 'tools-menu.inc' %]
             </div>
         </div>
+
+[% MACRO jsinclude BLOCK %]
+    [% INCLUDE 'datatables.inc' %]
+    [% INCLUDE 'columns_settings.inc' %]
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $('#dashboard-items').tabs();
+            [% IF ( result.start.defined || result.stop.defined || result.delete.defined ) %]
+                $('#dashboard-items').tabs("option","active",1);
+            [% END %]
+
+            var saved_table_columns_settings = [% ColumnsSettings.GetColumns( 'tools','oai-pmh-harvester-dashboard', 'saved-table', 'json' ) | $raw %];
+            var saved_table = KohaTable("saved-table",{},saved_table_columns_settings);
+
+            var submitted_table_columns_settings = [% ColumnsSettings.GetColumns( 'tools','oai-pmh-harvester-dashboard', 'submitted-table', 'json' ) | $raw %];
+            var submitted_table = KohaTable("submitted-table",{},submitted_table_columns_settings);
+
+            var history_table_columns_settings = [% ColumnsSettings.GetColumns( 'tools','oai-pmh-harvester-dashboard', 'history-table', 'json' ) | $raw %];
+            var history_table = KohaTable("history-table",{
+                serverSide: true,
+                searching: true,
+                processing: true,
+                ajax: {
+                    "url": '/cgi-bin/koha/svc/oai-pmh-harvester/history',
+                    contentType: 'application/json',
+                    type: 'POST',
+                    data: function ( d ) {
+                        return JSON.stringify( d );
+                    },
+                    dataSrc: function (json){
+                        var recordsTotal = json.recordsTotal;
+                        if(recordsTotal){
+                            $('#import_count').text( "("+recordsTotal+")" );
+                        }
+                        return json.data;
+                    }
+                },
+                columns: [
+                    { data: 'import_oai_id', },
+                    { data: 'repository', },
+                    { data: 'header_identifier', },
+                    { data: 'header_datestamp', },
+                    {
+                        data: 'header_status', render: function (data, type, full, meta){
+                            var display_string = _("Active");
+                            if (data == "deleted"){
+                                display_string = _("Deleted");
+                            }
+                            return display_string;
+                        }
+                    },
+                    {
+                        data: 'status', render: function (data, type, full, meta){
+                            var display_string = data;
+                            if (data == "added"){
+                                display_string = _("Added");
+                            }
+                            else if (data == "error"){
+                                display_string = _("Error");
+                            }
+                            else if (data == "not_found"){
+                                display_string = _("Not found");
+                            }
+                            else if (data == "updated"){
+                                display_string = _("Updated");
+                            }
+                            return display_string;
+                        }
+                    },
+                    { data: 'upload_timestamp', },
+                    {
+                        data: 'imported_record', render: function (data, type, full, meta){
+                            var display_string = data;
+                            var record_type = (full.record_type) ? full.record_type : 'biblio';
+                            if (data && record_type == 'biblio'){
+                                var link_text = _("View biblio record");
+                                var link = '<a href="/cgi-bin/koha/catalogue/detail.pl?biblionumber='+data+'">'+link_text+'</a>';
+                                display_string = link;
+                            }
+                            return display_string;
+                        }, searchable: false
+
+                    },
+                    {
+                        data: 'import_oai_id', render: function (data, type, full, meta){
+                            var display_string = data;
+                            var link_text = _("View record");
+                            var link = '<a href="/cgi-bin/koha/tools/oai-pmh-harvester/record.pl?import_oai_id='+data+'">'+link_text+'</a>';
+                            display_string = link;
+                            return display_string;
+                        }, searchable: false
+                    },
+                ],
+                //In theory, it would be nice to sort in descending order, but
+                //it causes severe paging issues the data is frequently updated.
+                //Caching would make the paging more stable, but the results would be stale.
+                order: [
+                    [ 0, 'asc' ],
+                ]
+            },history_table_columns_settings);
+            $('#refresh-button').click(function(){
+                history_table.ajax.reload( null, false );
+            });
+        });
+    </script>
+[% END %]
 [% INCLUDE 'intranet-bottom.inc' %]

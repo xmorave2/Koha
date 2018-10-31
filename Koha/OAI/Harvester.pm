@@ -30,11 +30,26 @@ use DateTime;
 use DateTime::Format::Strptime;
 
 use C4::Context;
-use Koha::Database;
+use Koha::OAI::Harvester::ImportQueues;
 
-=head1 API
+=head1 NAME
 
-=head2 Class Methods
+Koha::OAI::Harvester
+
+=head1 SYNOPSIS
+
+my $harvester = Koha::OAI::Harvester->spawn({
+    Downloader => $downloader,
+    DownloaderWorkers => $download_workers,
+    Importer => $importer,
+    ImporterWorkers => $import_workers,
+    ImportQueuePoll => $import_poll,
+    logger => $logger,
+    state_file => $statefile,
+    spooldir => $spooldir,
+});
+
+=head2 METHODS
 
 =cut
 
@@ -45,11 +60,23 @@ my $seconds_granularity = DateTime::Format::Strptime->new(
     pattern   => '%FT%TZ',
 );
 
+=head2 new
+
+Create object
+
+=cut
+
 sub new {
     my ($class, $args) = @_;
     $args = {} unless defined $args;
     return bless ($args, $class);
 }
+
+=head2 spawn
+
+    Creates POE sessions for handling tasks, downloading, and importing
+
+=cut
 
 sub spawn {
     my ($class, $args) = @_;
@@ -114,15 +141,14 @@ sub spawn {
             my $active_tasks = $poe_kernel->call("harvester","list_tasks","active");
             my @active_uuids = map { $_->{uuid} } @$active_tasks;
 
-            my $schema = Koha::Database->new()->schema();
-            my $rs = $schema->resultset('OaiHarvesterImportQueue')->search({
+            my $rs = Koha::OAI::Harvester::ImportQueues->new->search({
                 uuid => \@active_uuids,
                 status => "new"
             },{
                 order_by => { -asc => 'id' },
                 rows => 1,
             });
-            my $result = $rs->first;
+            my $result = $rs->single;
             if ($result){
                 $result->status("wip");
                 $result->update;
@@ -149,6 +175,12 @@ sub spawn {
     return;
 }
 
+=head2 on_start
+
+    Internal method that starts the harvester
+
+=cut
+
 sub on_start {
     my ($self, $kernel, $heap) = @_[OBJECT, KERNEL,HEAP];
     $kernel->alias_set('harvester');
@@ -161,13 +193,19 @@ sub on_start {
     $kernel->call("harvester","restore_state");
 }
 
+=head2 download_postback
+
+    Internal method
+
+=cut
+
 #NOTE: This isn't really implemented at the moment, as it's not really necessary.
 sub download_postback {
     my ($kernel, $request_packet, $response_packet) = @_[KERNEL, ARG0, ARG1];
     my $message = $response_packet->[0];
 }
 
-=head3 deregister
+=head2 deregister
 
     Remove the worker session from the harvester's in-memory scoreboard,
     unset the downloading flag if downloading is completed.
@@ -218,7 +256,7 @@ sub deregister {
 }
 
 
-=head3 is_task_finished
+=head2 is_task_finished
 
     This event handler checks if the task has finished downloading and importing record.
     If it is finished downloading and importing, the task is deleted from the harvester.
@@ -240,6 +278,12 @@ sub is_task_finished {
     }
     return 0;
 }
+
+=head2 register
+
+    Internal method for registering a task on the harvester's scoreboard
+
+=cut
 
 sub register {
     my ($self, $kernel, $heap, $session, $sender, $type, $task_uuid) = @_[OBJECT, KERNEL,HEAP,SESSION,SENDER,ARG0,ARG1];
@@ -288,6 +332,12 @@ sub register {
     }
 }
 
+=head2 does_task_repeat
+
+    Internal method for checking if a task is supposed to repeat after it finishes
+
+=cut
+
 sub does_task_repeat {
     my ($self, $kernel, $heap, $session, $uuid) = @_[OBJECT, KERNEL,HEAP,SESSION,ARG0];
     my $task = $kernel->call("harvester","get_task",$uuid);
@@ -306,19 +356,28 @@ sub does_task_repeat {
     return 0;
 }
 
+=head2 reset_imports_status
 
+    Internal method that resets the import queue from wip to new
+
+=cut
 
 sub reset_imports_status {
     my ($self, $kernel, $heap, $session) = @_[OBJECT, KERNEL,HEAP,SESSION];
 
-    my $schema = Koha::Database->new()->schema();
-    my $rs = $schema->resultset('OaiHarvesterImportQueue')->search({
+    my $rs = Koha::OAI::Harvester::ImportQueues->new->search({
                 status => "wip",
     });
     $rs->update({
         status => "new",
     });
 }
+
+=head2 restore_state
+
+    Method to restore the harvester to a pre-existing state.
+
+=cut
 
 sub restore_state {
     my ($self, $kernel, $heap, $session) = @_[OBJECT, KERNEL,HEAP,SESSION];
@@ -357,6 +416,12 @@ sub restore_state {
     }
 }
 
+=head2 save_state
+
+    Method to save the existing state of the harvester
+
+=cut
+
 sub save_state {
     my ($self, $kernel, $heap, $session) = @_[OBJECT, KERNEL,HEAP,SESSION];
     my $state_file = $self->{state_file};
@@ -385,7 +450,7 @@ sub save_state {
     return 0;
 }
 
-=head3 get_task
+=head2 get_task
 
     This event handler returns a task from a harvester using the task's
     uuid as an argument.
@@ -413,7 +478,9 @@ sub get_task {
     return 0;
 }
 
-=head3 get_import_count_for_task
+=head2 get_import_count_for_task
+
+    This gets the count of the number of imports exist for a certain task
 
 =cut
 
@@ -421,8 +488,7 @@ sub get_import_count_for_task {
     my ($self,$uuid) = @_;
     my $count = undef;
     if ($uuid){
-        my $schema = Koha::Database->new()->schema();
-        my $items = $schema->resultset('OaiHarvesterImportQueue')->search({
+        my $items = Koha::OAI::Harvester::ImportQueues->new->search({
             uuid => $uuid,
         });
         $count = $items->count;
@@ -430,7 +496,7 @@ sub get_import_count_for_task {
     return $count;
 }
 
-=head3 list_tasks
+=head2 list_tasks
 
     This event handler returns a list of tasks that have been submitted
     to the harvester. It returns data like uuid, status, parameters,
@@ -440,11 +506,10 @@ sub get_import_count_for_task {
 
 sub list_tasks {
     my ($self, $kernel, $heap, $session, $status) = @_[OBJECT, KERNEL,HEAP,SESSION, ARG0];
-    my $schema = Koha::Database->new()->schema();
     my @tasks = ();
     foreach my $uuid (sort keys %{$heap->{tasks}}){
         my $task = $heap->{tasks}->{$uuid};
-        my $items = $schema->resultset('OaiHarvesterImportQueue')->search({
+        my $items = Koha::OAI::Harvester::ImportQueues->new->search({
             uuid => $uuid,
         });
         my $count = $items->count // 0;
@@ -457,7 +522,7 @@ sub list_tasks {
     return \@tasks;
 }
 
-=head3 create_task
+=head2 create_task
 
     This event handler creates a spool directory for the task's imports.
     It also adds it to the harvester's memory and then saves memory to
@@ -502,7 +567,7 @@ sub create_task {
     return 0;
 }
 
-=head3 start_task
+=head2 start_task
 
     This event handler marks a task as active in the harvester's memory,
     save the memory to a persistent datastore, then enqueues the task,
@@ -536,9 +601,9 @@ sub start_task {
     return 0;
 }
 
-=head3 repeat_task
+=head2 repeat_task
 
-
+    This method re-queues a task for downloading
 
 =cut
 
@@ -553,7 +618,7 @@ sub repeat_task {
     }
 }
 
-=head3 stop_task
+=head2 stop_task
 
     This event handler prevents new workers from spawning, kills
     existing workers, and stops pending imports from being imported.
@@ -594,8 +659,7 @@ sub stop_task {
         }
 
         #Step Three: stop pending imports for this task
-        my $schema = Koha::Database->new()->schema();
-        my $items = $schema->resultset('OaiHarvesterImportQueue')->search({
+        my $items = Koha::OAI::Harvester::ImportQueues->new->search({
             uuid => $task_uuid,
         });
         my $rows_updated = $items->update({
@@ -609,7 +673,7 @@ sub stop_task {
     return 0;
 }
 
-=head3 delete_task
+=head2 delete_task
 
     Deleted tasks are stopped, pending imports are deleted from the
     database and file system, and then the task is removed from the harvester.
@@ -625,8 +689,7 @@ sub delete_task {
         $kernel->call($session,"stop_task",$task_uuid);
 
         #Step Two: delete pending imports in database
-        my $schema = Koha::Database->new()->schema();
-        my $items = $schema->resultset('OaiHarvesterImportQueue')->search({
+        my $items = Koha::OAI::Harvester::ImportQueues->new->search({
             uuid => $task_uuid,
         });
         if ($items){

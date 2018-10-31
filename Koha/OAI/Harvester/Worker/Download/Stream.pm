@@ -28,12 +28,36 @@ use C4::Context;
 use Koha::OAI::Harvester::Downloader;
 use parent 'Koha::OAI::Harvester::Worker';
 
+=head1 NAME
+
+Koha::OAI::Harvester::Worker::Download::Stream
+
+=head1 SYNOPSIS
+
+    This is a module used by the OAI-PMH harvester internally.
+
+    As a bare minimum, it must define an "on_start" method.
+
+=head1 METHODS
+
+=head2 new
+
+    Create object
+
+=cut
+
 sub new {
     my ($class, $args) = @_;
     $args = {} unless defined $args;
     $args->{type} = "download" unless $args->{type};
     return bless ($args, $class);
 }
+
+=head2 on_start
+
+    Internal event handler for starting the processing of a task
+
+=cut
 
 sub on_start {
     my ($self, $kernel, $heap, $postback,$task,$session) = @_[OBJECT, KERNEL, HEAP, ARG0,ARG1,SESSION];
@@ -70,6 +94,12 @@ sub on_start {
         $logger->debug("Child pid ".$child->PID." started as wheel ".$child->ID);
     }
 }
+
+=head2 do_work
+
+    Internal method for processing a download task
+
+=cut
 
 sub do_work {
     my ($self, $task) = @_;

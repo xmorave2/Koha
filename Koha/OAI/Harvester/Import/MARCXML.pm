@@ -26,6 +26,23 @@ use C4::Biblio;
 
 use constant MAX_MATCHES => 99999; #NOTE: This is an arbitrary value. We want to get all matches.
 
+=head1 NAME
+
+Koha::OAI::Harvester::Import::MARCXML
+
+=head1 SYNOPSIS
+
+    use Koha::OAI::Harvester::Import::MARCXML;
+    my $marcxml = eval { Koha::OAI::Harvester::Import::MARCXML->new({ dom => $results, }) };
+
+=head1 METHODS
+
+=head2 new
+
+    Create object
+
+=cut
+
 sub new {
     my ($class, $args) = @_;
     $args = {} unless defined $args;
@@ -46,6 +63,12 @@ sub new {
     }
     return bless ($args, $class);
 }
+
+=head2 import_record
+
+    Import a record into Koha
+
+=cut
 
 sub import_record {
     my ($self,$args) = @_;

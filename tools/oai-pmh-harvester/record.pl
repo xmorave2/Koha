@@ -21,7 +21,7 @@ use Modern::Perl;
 
 use C4::Auth;
 use C4::Output;
-use Koha::Database;
+use Koha::OAI::Harvester::Histories;
 
 my $input = new CGI;
 
@@ -35,17 +35,11 @@ my ($template, $loggedinuser, $cookie) =
 
 my $import_oai_id = $input->param('import_oai_id');
 if ($import_oai_id){
-    my $schema = Koha::Database->new()->schema();
-    if ($schema){
-        my $rs = $schema->resultset("OaiHarvesterHistory");
-        if ($rs){
-            my $row = $rs->find($import_oai_id);
-            if ($row){
-                my $record = $row->record;
-                if ($record){
-                    $template->{VARS}->{ record } = $record;
-                }
-            }
+    my $history = Koha::OAI::Harvester::Histories->new->find($import_oai_id);
+    if ($history){
+        my $record = $history->record;
+        if ($record){
+            $template->{VARS}->{ record } = $record;
         }
     }
 }

@@ -20,7 +20,8 @@
 use Modern::Perl;
 use C4::Auth qw(check_cookie_auth haspermission get_session);
 use JSON;
-use Koha::Database;
+use Koha::OAI::Harvester::Biblios;
+use Koha::OAI::Harvester::Histories;
 
 my $input = new CGI;
 
@@ -88,40 +89,36 @@ if ($input->request_method eq "POST"){
 }
 
 my $page = ( $start / $length ) + 1;
-my $schema = Koha::Database->new()->schema();
-if ($schema){
-    my $rs = $schema->resultset("OaiHarvesterHistory");
-    my $results = $rs->search(
-        \@search,
-        {
-            result_class => 'DBIx::Class::ResultClass::HashRefInflator',
-            page => $page,
-            rows => $length,
-            order_by => \@order_by,
-        },
-    );
-    my $count = $rs->count;
-    my $filtered_count = $results->pager->total_entries;
-    my @rows = ();
-    while (my $row = $results->next){
-        $row->{imported_record} = '';
-        if ($row->{record_type} eq "biblio"){
-            my $harvested_biblio = $schema->resultset("OaiHarvesterBiblio")->find(
-                    {
-                        oai_repository => $row->{repository},
-                        oai_identifier => $row->{header_identifier},
-                    },
-                    { key => "oai_record" },
-            );
-            $row->{imported_record} = $harvested_biblio->biblionumber->id if $harvested_biblio;
-        }
-        push(@rows,$row);
+my $results = Koha::OAI::Harvester::Histories->new->search(
+    \@search,
+    {
+        page => $page,
+        rows => $length,
+        order_by => \@order_by,
+    },
+);
+my $count = Koha::OAI::Harvester::Histories->new->count;
+my $filtered_count = $results->pager->total_entries;
+my @rows = ();
+while (my $obj = $results->next){
+    my $row = $obj->unblessed;
+    $row->{imported_record} = '';
+    if ($row->{record_type} eq "biblio"){
+        my $harvested_biblio = Koha::OAI::Harvester::Biblios->new->find(
+                {
+                    oai_repository => $row->{repository},
+                    oai_identifier => $row->{header_identifier},
+                },
+                { key => "oai_record" },
+        );
+        $row->{imported_record} = $harvested_biblio->biblionumber if $harvested_biblio;
     }
-    if ($count){
-        $data->{recordsTotal} = $count;
-        $data->{recordsFiltered} = $filtered_count;
-        $data->{data} = \@rows if @rows;
-    }
+    push(@rows,$row);
+}
+if ($count){
+    $data->{recordsTotal} = $count;
+    $data->{recordsFiltered} = $filtered_count;
+    $data->{data} = \@rows if @rows;
 }
 
 binmode STDOUT, ":encoding(UTF-8)";

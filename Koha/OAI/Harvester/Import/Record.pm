@@ -27,16 +27,29 @@ use File::Basename;
 use C4::Context;
 use C4::Biblio;
 
-use Koha::Database;
 use Koha::OAI::Harvester::Import::MARCXML;
+use Koha::OAI::Harvester::Biblios;
+use Koha::OAI::Harvester::History;
 
-=head1 API
+=head1 NAME
 
-=head2 Class Methods
+Koha::OAI::Harvester::Import::Record
+
+=head1 SYNOPSIS
+
+    use Koha::OAI::Harvester::Import::Record;
+    my $oai_record = Koha::OAI::Harvester::Import::Record->new({
+        doc => $dom,
+        repository => $repository,
+    });
+
+=head1 METHODS
+
+=head2 new
+
+    Create object
 
 =cut
-
-my $schema = Koha::Database->new()->schema();
 
 sub new {
     my ($class, $args) = @_;
@@ -70,6 +83,12 @@ sub new {
     return bless ($args, $class);
 }
 
+=head2 is_deleted_upstream
+
+    Returns true if OAI-PMH record is deleted upstream
+
+=cut
+
 sub is_deleted_upstream {
     my ($self, $args) = @_;
     if ($self->{header_status}){
@@ -79,6 +98,15 @@ sub is_deleted_upstream {
     }
     return 0;
 }
+
+=head2 set_filter
+
+    $self->set_filter("/path/to/filter.xsl");
+
+    Set a XSLT to use to filter records on import. This
+    takes a full filepath as an argument.
+
+=cut
 
 sub set_filter {
     my ($self, $filter_definition) = @_;
@@ -120,6 +148,12 @@ sub _parse_filter {
     }
     return ($type,$filter);
 }
+
+=head2 filter
+
+    Filters the OAI-PMH record using a filter
+
+=cut
 
 sub filter {
     my ($self) = @_;
@@ -165,7 +199,7 @@ sub _find_koha_link {
     my $record_type = $args->{record_type} // "biblio";
     my $link_id;
     if ($record_type eq "biblio"){
-        my $link = $schema->resultset('OaiHarvesterBiblio')->find(
+        my $link = Koha::OAI::Harvester::Biblios->new->find(
             {
                 oai_repository => $self->{repository},
                 oai_identifier => $self->{header_identifier},
@@ -173,13 +207,13 @@ sub _find_koha_link {
             { key => "oai_record",}
         );
         if ($link && $link->biblionumber){
-            $link_id = $link->biblionumber->id;
+            $link_id = $link->biblionumber;
         }
     }
     return $link_id;
 }
 
-=head3 import_record
+=head2 import_record
 
     my ($action,$record_id) = $oai_record->import_record({
         filter => $filter,
@@ -246,7 +280,7 @@ sub import_record {
     }
 
     #Log record details to database
-    my $importer = $schema->resultset('OaiHarvesterHistory')->create({
+    Koha::OAI::Harvester::History->new({
         header_identifier => $self->{header_identifier},
         header_datestamp => $self->{header_datestamp},
         header_status => $self->{header_status},
@@ -257,10 +291,17 @@ sub import_record {
         framework => $framework,
         record_type => $record_type,
         matcher_code => $matcher ? $matcher->code : undef,
-    });
+    })->store();
 
     return ($action,$linked_id);
 }
+
+=head2 link_koha_record
+
+    Link an OAI-PMH record with a Koha record using
+    the OAI-PMH repository and OAI-PMH identifier
+
+=cut
 
 sub link_koha_record {
     my ($self, $args) = @_;
@@ -268,7 +309,7 @@ sub link_koha_record {
     my $koha_id = $args->{koha_id};
     if ($koha_id){
         if ($record_type eq "biblio"){
-            my $import_oai_biblio = $schema->resultset('OaiHarvesterBiblio')->find_or_create({
+            my $import_oai_biblio = Koha::OAI::Harvester::Biblios->new->find_or_create({
                 oai_repository => $self->{repository},
                 oai_identifier => $self->{header_identifier},
                 biblionumber => $koha_id,
@@ -279,6 +320,12 @@ sub link_koha_record {
         }
     }
 }
+
+=head2 delete_koha_record
+
+    Delete a Koha record
+
+=cut
 
 sub delete_koha_record {
     my ($self, $args) = @_;

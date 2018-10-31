@@ -23,11 +23,34 @@ use IO::Socket::UNIX;
 use IO::Select;
 use JSON;
 
+=head1 NAME
+
+Koha::OAI::Harvester::Client
+
+=head1 SYNOPSIS
+
+  use Koha::OAI::Harvester::Client;
+  my $client = Koha::OAI::Harvester::Client->new($client_config);
+
+=head1 METHODS
+
+=head2 new
+
+Create object
+
+=cut
+
 sub new {
     my ($class, $args) = @_;
     $args = {} unless defined $args;
     return bless ($args, $class);
 }
+
+=head2 connect
+
+Connect to Koha::OAI::Harvester::Listener via a Unix socket
+
+=cut
 
 sub connect {
     my ($self) =  @_;
@@ -62,6 +85,12 @@ sub connect {
     return 0;
 }
 
+=head2 create
+
+    Create a task on the harvester
+
+=cut
+
 sub create {
     my ($self,$task) = @_;
     my $message = {
@@ -73,6 +102,12 @@ sub create {
     my ($status) = $self->_exchange($message);
     return $status;
 }
+
+=head2 start
+
+    Start a task on the harvester
+
+=cut
 
 sub start {
     my ($self,$uuid) = @_;
@@ -88,6 +123,12 @@ sub start {
     return $status;
 }
 
+=head2 stop
+
+    Stop a task on the harvester
+
+=cut
+
 sub stop {
     my ($self,$uuid) = @_;
     my $message = {
@@ -102,6 +143,12 @@ sub stop {
     return $status;
 }
 
+=head2 delete
+
+    Delete a task on the harvester
+
+=cut
+
 sub delete {
     my ($self,$uuid) = @_;
     my $message = {
@@ -115,6 +162,12 @@ sub delete {
     my ($status) = $self->_exchange($message);
     return $status;
 }
+
+=head2 list
+
+    List all tasks on the harvester
+
+=cut
 
 sub list {
     my ($self) = @_;

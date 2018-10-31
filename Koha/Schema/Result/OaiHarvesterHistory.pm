@@ -155,8 +155,8 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("import_oai_id");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-03-29 12:23:43
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Rp/ZEZsKVlLo2vaM3M37ow
+# Created by DBIx::Class::Schema::Loader v0.07042 @ 2018-10-31 05:53:48
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:C/ETSPdx0O4xfQnu09kGeQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

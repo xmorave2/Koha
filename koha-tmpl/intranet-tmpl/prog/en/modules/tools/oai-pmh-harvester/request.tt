@@ -1,48 +1,9 @@
+[% USE Asset %]
+[% USE raw %]
+[% SET footerjs = 1 %]
 [% INCLUDE 'doc-head-open.inc' %]
 <title>Koha &rsaquo; Tools &rsaquo; OAI-PMH harvester &rsaquo; Request</title>
 [% INCLUDE 'doc-head-close.inc' %]
-[% INCLUDE 'calendar.inc' %]
-<script type="text/javascript" src="[% interface %]/lib/jquery/plugins/jquery-ui-timepicker-addon.min.js"></script>
-[% INCLUDE 'timepicker.inc' %]
-<script type="text/javascript">
-//<![CDATA[
-    $(document).ready(function() {
-        toggle_identifier();
-        $("#oai_verb").on("click",toggle_identifier);
-        $(".datetime_utc").datetimepicker({
-            separator: "T",
-            timeSuffix: 'Z',
-            dateFormat: "yy-mm-dd",
-            timeFormat: "HH:mm:ss",
-            hour: 0,
-            minute: 0,
-            second: 0,
-            showSecond: 1,
-            // timezone doesn't work with the "Now" button in v1.4.3 although it appears to in v1.6.1
-            // timezone: '+000'
-        });
-    });
-    function toggle_identifier (){
-        var verb = $("#oai_verb").find(":selected").val();
-        var oai_identifier = $("#oai_identifier");
-        var oai_set = $("#oai_set");
-        var oai_from = $("#oai_from");
-        var oai_until = $("#oai_until");
-        if (verb == 'ListRecords'){
-            oai_identifier.prop('disabled', true);
-            oai_set.prop('disabled', false);
-            oai_from.prop('disabled', false);
-            oai_until.prop('disabled', false);
-        }
-        else if (verb == 'GetRecord'){
-            oai_identifier.prop('disabled', false);
-            oai_set.prop('disabled', true);
-            oai_from.prop('disabled', true);
-            oai_until.prop('disabled', true);
-        }
-    }
-//]]>
-</script>
 <style type="text/css">
     /* Override staff-global.css which hides second, millisecond, and microsecond sliders */
     .ui_tpicker_second {
@@ -76,16 +37,16 @@
                         [% ELSIF ( op == "edit" ) %]
                              <input type="hidden" name="op" value="update" />
                         [% ELSE %]
-                            <input type="hidden" name="op" value="[% op %]" />
+                            <input type="hidden" name="op" value="[% op | html %]" />
                         [% END %]
                         [% IF ( id ) %]
-                            <input type="hidden" name="id" value="[% id %]" />
+                            <input type="hidden" name="id" value="[% id | html %]" />
                         [% END %]
                         <fieldset class="rows">
                             <ol>
                                 <li>
                                     <label for="name">Name:</label>
-                                    <input type="text" size="30" id="name" name="name" value="[% oai_pmh_request.name %]"/>
+                                    <input type="text" size="30" id="name" name="name" value="[% oai_pmh_request.name | html %]"/>
                                     <span class="help">This is just a short name to help in managing requests.</span>
                                 </li>
                             </ol>
@@ -95,7 +56,7 @@
                             <ol>
                                 <li>
                                     <label for="http_url">URL:</label>
-                                    <input type="text" size="30" id="http_url" name="http_url" value="[% oai_pmh_request.http_url %]">
+                                    <input type="text" size="30" id="http_url" name="http_url" value="[% oai_pmh_request.http_url | html %]">
                                     [% IF (errors.http_url.malformed) %]<span class="error">[This must be a properly formatted HTTP or HTTPS URL.]</span>[% END %]
                                     [% IF (errors.http.404) %]<span class="error">[Cannot find address specified by this URL.]</span>[% END %]
                                     [% IF (errors.http.401) %]<span class="error">[Permission denied to access this URL.]</span>[% END %]
@@ -106,15 +67,15 @@
                             <ol>
                                 <li>
                                     <label for="http_username">Username:</label>
-                                    <input type="text" size="30" id="http_username" name="http_username" value="[% oai_pmh_request.http_username %]">
+                                    <input type="text" size="30" id="http_username" name="http_username" value="[% oai_pmh_request.http_username | html %]">
                                 </li>
                                 <li>
                                     <label for="http_password">Password:</label>
-                                    <input type="text" size="30" id="http_password" name="http_password" value="[% oai_pmh_request.http_password %]">
+                                    <input type="text" size="30" id="http_password" name="http_password" value="[% oai_pmh_request.http_password | html %]">
                                 </li>
                                 <li>
                                     <label for="http_realm">Realm:</label>
-                                    <input type="text" size="30" id="http_realm" name="http_realm" value="[% oai_pmh_request.http_realm %]">
+                                    <input type="text" size="30" id="http_realm" name="http_realm" value="[% oai_pmh_request.http_realm | html %]">
                                 </li>
                             </ol>
                         </fieldset>
@@ -138,31 +99,31 @@
                                 </li>
                                 <li>
                                     <label for="oai_metadataPrefix">Metadata prefix:</label>
-                                    <input type="text" size="30" id="oai_metadataPrefix" name="oai_metadataPrefix" value="[% oai_pmh_request.oai_metadataPrefix %]">
+                                    <input type="text" size="30" id="oai_metadataPrefix" name="oai_metadataPrefix" value="[% oai_pmh_request.oai_metadataPrefix | html %]">
                                     [% IF (errors.oai_metadataPrefix.unavailable) %]<span class="error">[This metadataPrefix is unavailable from this OAI-PMH provider.]</span>[% END %]
                                     [% IF (errors.oai_metadataPrefix.missing) %]<span class="error">[metadataPrefix is a required field for an OAI-PMH request.]</span>[% END %]
                                 </li>
                                 <li>
                                     <label for="oai_identifier">Identifier:</label>
-                                    <input type="text" size="30" id="oai_identifier" name="oai_identifier" value="[% oai_pmh_request.oai_identifier %]">
+                                    <input type="text" size="30" id="oai_identifier" name="oai_identifier" value="[% oai_pmh_request.oai_identifier | html %]">
                                     [% IF (errors.oai_identifier.missing) %]<span class="error">[Identifier is a required field when using GetRecord for an OAI-PMH request.]</span>[% END %]
                                 </li>
                                 <li>
                                     <label for="oai_set">Set:</label>
-                                    <input type="text" size="30" id="oai_set" name="oai_set" value="[% oai_pmh_request.oai_set %]">
+                                    <input type="text" size="30" id="oai_set" name="oai_set" value="[% oai_pmh_request.oai_set | html %]">
                                     [% IF (errors.oai_set.unavailable) %]<span class="error">[This set is unavailable from this OAI-PMH provider.]</span>[% END %]
                                 </li>
                                 [% IF (errors.oai.granularity_mismatch) %]<span class="error">[You must specify the same granularity for both From and Until.]</span>[% END %]
                                 <li>
                                     <label for="oai_from">From:</label>
-                                    <input type="text" size="30" class="datetime_utc" id="oai_from" name="oai_from" value="[% oai_pmh_request.oai_from %]">
+                                    <input type="text" size="30" class="datetime_utc" id="oai_from" name="oai_from" value="[% oai_pmh_request.oai_from | html %]">
                                     <span class="help">This value will be treated as UTC time. Note that some repositories only support YYYY-MM-DD datestamps.</span>
                                     [% IF (errors.oai_from.malformed) %]<span class="error">[This must be in YYYY-MM-DD or YYYY-MM-DDThh:mm:ssZ format.]</span>[% END %]
                                     [% IF (errors.oai_from.unavailable) %]<span class="error">[This granularity is unsupported by this OAI-PMH provider.]</span>[% END %]
                                 </li>
                                 <li>
                                     <label for="oai_until">Until:</label>
-                                    <input type="text" size="30" class="datetime_utc" id="oai_until" name="oai_until" value="[% oai_pmh_request.oai_until %]">
+                                    <input type="text" size="30" class="datetime_utc" id="oai_until" name="oai_until" value="[% oai_pmh_request.oai_until | html %]">
                                     <span class="help">This value will be treated as UTC time. Note that some repositories only support YYYY-MM-DD datestamps.</span>
                                     [% IF (errors.oai_until.malformed) %]<span class="error">[This must be in YYYY-MM-DD or YYYY-MM-DDThh:mm:ssZ format.]</span>[% END %]
                                     [% IF (errors.oai_until.unavailable) %]<span class="error">[This granularity is unsupported by this OAI-PMH provider.]</span>[% END %]
@@ -177,7 +138,7 @@
                                     [% IF ( oai_pmh_request.import_filter == "default" ) %]
                                         <input type="text" size="30" id="import_filter" name="import_filter" value="default">
                                     [% ELSE %]
-                                        <input type="text" size="30" id="import_filter" name="import_filter" value="[% oai_pmh_request.import_filter %]">
+                                        <input type="text" size="30" id="import_filter" name="import_filter" value="[% oai_pmh_request.import_filter | html %]">
                                     [% END %]
                                     <span class="help">If no filter is entered, the default filter will be used.</span>
                                 </li>
@@ -187,9 +148,9 @@
                                         <option value="">Default framework</option>
                                         [% FOREACH framework IN frameworks %]
                                             [% IF ( oai_pmh_request.import_framework_code == framework.frameworkcode ) %]
-                                                <option selected="selected" value="[% framework.frameworkcode %]">[% framework.frameworktext %]</option>
+                                                <option selected="selected" value="[% framework.frameworkcode | html %]">[% framework.frameworktext | html %]</option>
                                             [% ELSE %]
-                                                <option value="[% framework.frameworkcode %]">[% framework.frameworktext %]</option>
+                                                <option value="[% framework.frameworkcode | html %]">[% framework.frameworktext | html %]</option>
                                             [% END %]
                                         [% END %]
                                     </select>
@@ -206,9 +167,9 @@
                                         <option value="">None</option>
                                         [% FOREACH matcher IN matchers %]
                                             [% IF ( oai_pmh_request.import_matcher_code == matcher.code ) %]
-                                                <option value="[% matcher.code %]" selected="selected">[% matcher.description %]</option>
+                                                <option value="[% matcher.code | html %]" selected="selected">[% matcher.description | html %]</option>
                                             [% ELSE %]
-                                                <option value="[% matcher.code %]">[% matcher.description %]</option>
+                                                <option value="[% matcher.code | html %]">[% matcher.description | html %]</option>
                                             [% END %]
                                         [% END %]
                                     </select>
@@ -221,7 +182,7 @@
                             <ol>
                                 <li>
                                     <label for="interval">Interval (seconds): </label>
-                                    <input type="text" id="interval" name="interval" value="[% oai_pmh_request.interval %]" size="4">
+                                    <input type="text" id="interval" name="interval" value="[% oai_pmh_request.interval | html %]" size="4">
                                     <span class="help">The download request will be repeated in intervals of this many seconds. Enter "0" if you want the task to only happen once.</span>
                                 </li>
                             </ol>
@@ -238,4 +199,46 @@
                 [% INCLUDE 'tools-menu.inc' %]
             </div>
         </div>
+[% MACRO jsinclude BLOCK %]
+    [% INCLUDE 'calendar.inc' %]
+    [% Asset.js("lib/jquery/plugins/jquery-ui-timepicker-addon.min.js") | $raw %]
+    [% INCLUDE 'timepicker.inc' %]
+    <script type="text/javascript">
+        $(document).ready(function() {
+            toggle_identifier();
+            $("#oai_verb").on("click",toggle_identifier);
+            $(".datetime_utc").datetimepicker({
+                separator: "T",
+                timeSuffix: 'Z',
+                dateFormat: "yy-mm-dd",
+                timeFormat: "HH:mm:ss",
+                hour: 0,
+                minute: 0,
+                second: 0,
+                showSecond: 1,
+                // timezone doesn't work with the "Now" button in v1.4.3 although it appears to in v1.6.1
+                // timezone: '+000'
+            });
+        });
+        function toggle_identifier (){
+            var verb = $("#oai_verb").find(":selected").val();
+            var oai_identifier = $("#oai_identifier");
+            var oai_set = $("#oai_set");
+            var oai_from = $("#oai_from");
+            var oai_until = $("#oai_until");
+            if (verb == 'ListRecords'){
+                oai_identifier.prop('disabled', true);
+                oai_set.prop('disabled', false);
+                oai_from.prop('disabled', false);
+                oai_until.prop('disabled', false);
+            }
+            else if (verb == 'GetRecord'){
+                oai_identifier.prop('disabled', false);
+                oai_set.prop('disabled', true);
+                oai_from.prop('disabled', true);
+                oai_until.prop('disabled', true);
+            }
+        }
+    </script>
+[% END %]
 [% INCLUDE 'intranet-bottom.inc' %]

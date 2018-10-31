@@ -28,6 +28,24 @@ use Koha::OAI::Harvester::Import::Record;
 
 use parent 'Koha::OAI::Harvester::Worker';
 
+=head1 NAME
+
+Koha::OAI::Harvester::Worker::Import
+
+=head1 SYNOPSIS
+
+    This is a module used by the OAI-PMH harvester internally.
+
+    As a bare minimum, it must define an "on_start" method.
+
+=head1 METHODS
+
+=head2 new
+
+     Create object
+
+=cut
+
 sub new {
     my ($class, $args) = @_;
     $args = {} unless defined $args;
@@ -35,6 +53,12 @@ sub new {
     $args->{type} = "import" unless $args->{type};
     return bless ($args, $class);
 }
+
+=head2 on_start
+
+    Internal event handler for starting the processing of a task
+
+=cut
 
 sub on_start {
     my ($self, $kernel, $heap, $postback,$task) = @_[OBJECT, KERNEL, HEAP, ARG0,ARG1];

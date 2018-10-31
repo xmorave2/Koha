@@ -22,6 +22,64 @@ use Modern::Perl;
 use POSIX; #For daemonizing
 use Fcntl qw(:flock); #For pidfile
 
+=head1 NAME
+
+Koha::Daemon
+
+=head1 SYNOPSIS
+
+  use Koha::Daemon;
+  my $daemon = Koha::Daemon->new({
+    pidfile => "/path/to/file.pid",
+    logfile => "/path/to/file.log",
+    daemonize => 1,
+  });
+  $daemon->run();
+
+=head1 METHODS
+
+=head2 new
+
+Create object
+
+=head2 run
+
+Run the daemon.
+
+This method calls all the internal methods which
+are do everything necessary to run the daemon.
+
+=head1 INTERNAL METHODS
+
+=head2 daemonize
+
+Internal function for setting object up as a proper daemon
+(e.g. forking, setting permissions, changing directories,
+ closing file handles, etc.)
+
+=head2 get_pidfile
+
+Internal function to get a filehandle for the pidfile
+
+=head2 lock_pidfile
+
+Internal function to lock the pidfile, so that only one daemon
+can run against this pidfile
+
+=head2 log_to_file
+
+Internal function to log to a file
+
+=head2 make_pidfilehandle
+
+Internal function to make a filehandle for pidfile
+
+=head2 write_pidfile
+
+Internal function to write pid to pidfile
+
+=cut
+
 sub new {
     my ($class, $args) = @_;
     $args = {} unless defined $args;

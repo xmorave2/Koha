@@ -242,6 +242,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 oai_harvester_biblios
+
+Type: has_many
+
+Related object: L<Koha::Schema::Result::OaiHarvesterBiblio>
+
+=cut
+
+__PACKAGE__->has_many(
+  "oai_harvester_biblios",
+  "Koha::Schema::Result::OaiHarvesterBiblio",
+  { "foreign.biblionumber" => "self.biblionumber" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 old_reserves
 
 Type: has_many
@@ -348,7 +363,7 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07042 @ 2018-02-16 17:54:53
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:bUv00JjY09Hj2Zj4klqyxA
+# Created by DBIx::Class::Schema::Loader v0.07042 @ 2018-10-31 05:45:15
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ptt942qUu2GcGqOTRePNWQ
 
 1;

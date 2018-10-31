@@ -24,11 +24,37 @@ use IO::Socket qw(AF_UNIX);
 use JSON;
 use URI;
 
+=head1 NAME
+
+Koha::OAI::Harvester::Listener
+
+=head1 SYNOPSIS
+
+    use Koha::OAI::Harvester::Listener;
+    my $listener = Koha::OAI::Harvester::Listener->spawn({
+        logger => $logger,
+        socket => $socket_addr,
+    });
+
+=head1 METHODS
+
+=head2 new
+
+    Create object
+
+=cut
+
 sub new {
     my ($class, $args) = @_;
     $args = {} unless defined $args;
     return bless ($args, $class);
 }
+
+=head2 spawn
+
+    Create POE session for listener
+
+=cut
 
 sub spawn {
     my ($class, $args) = @_;
@@ -50,6 +76,12 @@ sub spawn {
     );
 }
 
+=head2 on_start
+
+    Internal method for starting listener
+
+=cut
+
 sub on_start {
     my ($kernel,$heap,$socket_uri) = @_[KERNEL,HEAP,ARG0];
 
@@ -68,6 +100,12 @@ sub on_start {
         chmod 0666, $socket_path;
     }
 }
+
+=head2 on_server_success
+
+    Internal event handler for successful connection to server
+
+=cut
 
 sub on_server_success {
     my ($self, $client_socket, $server_wheel_id, $heap, $session) = @_[OBJECT, ARG0, ARG3, HEAP,SESSION];
@@ -88,6 +126,12 @@ sub on_server_success {
     $client_wheel->put("HELLO");
 }
 
+=head2 on_server_error
+
+    Internal event handler for server errors
+
+=cut
+
 sub on_server_error {
     my ($self, $operation, $errnum, $errstr, $heap, $session) = @_[OBJECT, ARG0, ARG1, ARG2,HEAP, SESSION];
     my $logger = $self->{logger};
@@ -95,12 +139,24 @@ sub on_server_error {
     delete $heap->{server};
 }
 
+=head2 on_client_error
+
+    Internal event handler for errors relating to the client connection
+
+=cut
+
 sub on_client_error {
     my ($self, $wheel_id,$heap,$session) = @_[OBJECT, ARG3,HEAP,SESSION];
     my $logger = $self->{logger};
     $logger->info("Connection $wheel_id failed or ended.");
     delete $heap->{client}->{$wheel_id};
 }
+
+=head2 on_client_input
+
+    Internal event handler for input from clients
+
+=cut
 
 sub on_client_input {
     my ($self, $input, $wheel_id, $session, $kernel, $heap) = @_[OBJECT, ARG0, ARG1, SESSION, KERNEL, HEAP];

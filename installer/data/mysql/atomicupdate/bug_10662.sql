@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS `oai_harvester_biblios` (
   UNIQUE KEY `oai_record` (`oai_identifier`,`oai_repository`) USING BTREE,
   KEY `FK_import_oai_biblio_1` (`biblionumber`),
   CONSTRAINT `FK_import_oai_biblio_1` FOREIGN KEY (`biblionumber`) REFERENCES `biblio` (`biblionumber`) ON DELETE CASCADE ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table 'oai_harvester_history'
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS  `oai_harvester_history` (
   `record_type` enum('biblio','auth','holdings') COLLATE utf8_unicode_ci NOT NULL,
   `matcher_code` varchar(10) COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`import_oai_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table 'oai_harvester_import_queue'
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS `oai_harvester_import_queue` (
   `result` text CHARACTER SET utf8 NOT NULL,
   `result_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table 'oai_harvester_requests'
@@ -70,4 +70,4 @@ CREATE TABLE IF NOT EXISTS `oai_harvester_requests` (
   `interval` int(10) unsigned NOT NULL,
   `name` varchar(45) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

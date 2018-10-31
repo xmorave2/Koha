@@ -22,12 +22,35 @@ use POE;
 use DateTime;
 use JSON;
 
+=head1 NAME
+
+Koha::OAI::Harvester::Worker
+
+=head1 SYNOPSIS
+
+    This is just a base class to use when writing workers for
+    the OAI-PMH harvester.
+
+=head1 METHODS
+
+=head2 new
+
+    Create object
+
+=cut
+
 sub new {
     my ($class, $args) = @_;
     $args = {} unless defined $args;
     $args->{type} = "worker" unless $args->{type};
     return bless ($args, $class);
 }
+
+=head2 run
+
+    The entry point to getting a worker to process a task
+
+=cut
 
 sub run {
     my ($self,$args) = @_;
@@ -53,6 +76,12 @@ sub run {
     );
 }
 
+=head2 stop_worker
+
+    Internal method for killing this worker's child processes
+
+=cut
+
 sub stop_worker {
     my ($self,$heap) = @_[OBJECT,HEAP];
     if (my $child_processes = $heap->{children_by_pid}){
@@ -63,6 +92,12 @@ sub stop_worker {
     }
 }
 
+=head2 on_stop
+
+    Internal event handler for deregistering the worker session
+    from the harvester's roster of workers
+
+=cut
 
 sub on_stop {
     my ($self,$kernel) = @_[OBJECT,KERNEL];
@@ -70,6 +105,12 @@ sub on_stop {
     #Deregister the worker session from the harvester's roster of workers
     $kernel->call("harvester","deregister",$self->{type});
 }
+
+=head2 on_child_stdout
+
+    Internal event handler for reading output from a child process
+
+=cut
 
 # Wheel event, including the wheel's ID.
 sub on_child_stdout {
@@ -92,6 +133,12 @@ sub on_child_stdout {
     }
 }
 
+=head2 on_child_stderr
+
+    Internal event handler for reading errors from a child process
+
+=cut
+
 # Wheel event, including the wheel's ID.
 sub on_child_stderr {
     my ($self,$stderr_line, $wheel_id) = @_[OBJECT, ARG0, ARG1];
@@ -102,6 +149,12 @@ sub on_child_stderr {
         $logger->debug("[$type][pid ".$child->PID."][STDERR] $stderr_line");
     }
 }
+
+=head2 on_child_close
+
+    Internal event handler for when a child closes its pipes
+
+=cut
 
 # Wheel event, including the wheel's ID.
 sub on_child_close {
@@ -123,6 +176,12 @@ sub on_child_close {
     }
     delete $heap->{children_by_pid}->{$child->PID};
 }
+
+=head2 on_child_signal
+
+    Internal event handler for when a child exits
+
+=cut
 
 sub on_child_signal {
     my ($self,$kernel,$pid,$status) = @_[OBJECT,KERNEL,ARG1,ARG2];
